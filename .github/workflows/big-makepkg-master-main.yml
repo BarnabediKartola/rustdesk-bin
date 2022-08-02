@@ -1,9 +1,17 @@
 # This is a basic workflow to help you get started with Actions
 
-name: Makepkg
+name: Big-Makepkg
 
 # Controls when the workflow will run
-on: [push, pull_request, workflow_dispatch]
+on:
+  # Triggers the workflow on push or pull request events but only for the "master" branch
+  push:
+    branches: [ "master", "main" ]
+  pull_request:
+    branches: [ "master", "main" ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -23,42 +31,59 @@ jobs:
         # uses: edlanglois/pkgbuild-action@5bb737e69e6a5a171327e6bcf8adace04814685c
         uses: BarnabediKartola/manjaro-pkg-action@main
         with:
-          package:
+          package: pkgbuild
           branch: stable
-          
-      #- name: Print Package Files
-        #run: |
-          #echo "Successfully created the following package archive"
-          #echo "Package: ${{ steps.makepkg.outputs.pkgfile0 }}"
-          
-      # Uncomment to upload the package as an artifact    
-      #- name: Upload Package Archive
-        #uses: actions/upload-artifact@v2
-        #with:
-          #path: ${{ steps.makepkg.outputs.pkgfile0 }}
+          gpg-key: BE41CC0CECB86005
     
-      #- id: upload-prepare
-        #shell: bash -O extglob {0}
+      - name: Create local changes
+        run: git add pkgbuild/PKGBUILD
+        
+      - name: Commit files
+        run: |
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git commit -m "Add changes" -a  
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}
+        
+      - name: publish package
+        shell: bash -O extglob {0}
+        run: |
+          release=$(find . -name *.zst | cut -d "/" -f2)
+          echo ${{ github.token }} | gh auth login --with-token
+          gh release create ${release} --title ${release} --repo ${{ github.repository }} --notes "automated release" || echo "release already exists"
+          GITHUB_LINK=https://github.com/${GITHUB_REPOSITORY}/releases/download/${release}
+          for i in .zst .sig .tar; do
+          find -iname *$i -exec gh release upload ${release} --repo ${GITHUB_REPOSITORY} --clobber {} \;
+          done
+          
+          
+          
+        
+      #- name: prepare upload
+        #shell: bash
         #run: |
           #echo "## ssh setup"
           #mkdir -p /home/runner/.ssh
           #touch /home/runner/.ssh/github_actions
           #chmod 600 /home/runner/.ssh/github_actions
           #ssh-agent -a /tmp/ssh_agent.sock > /dev/null
-          #echo "::set-output name=upload-files::./${{ steps.makepkg.outputs.pkgfile0 }}"
-    
-      #- id: upload-github-release
+      #- name: push to boxit
         #shell: bash -O extglob {0}
+        #env:
+          #SSH_AUTH_SOCK: /tmp/ssh_agent.sock
         #run: |
-          #echo "## github upload"
-          #echo ${{ github.token }} | gh auth login --with-token
-          #pkgname=$(echo ${{ steps.makepkg.outputs.pkgfile0 }} | cut -d "/" -f2)
-          #echo "Create"
-          #gh release create $pkgname --title $pkgname --repo ${{ github.repository }} --notes "automated release" || echo "release already exists"
-          #echo "Upload"
-          #GITHUB_LINK=https://github.com/${GITHUB_REPOSITORY}/releases/download/$pkgname
-          #gh release upload $pkgname --repo ${{ github.repository }} --clobber \
-            #${{ steps.upload-prepare.outputs.upload-files }}
+          #if [ -z "${{ inputs.boxit-host }}" ] || [ -z "${{ inputs.boxit-target }}" ] || [ -z "${{ inputs.ssh-key }}" ]; then 
+            #echo "## not (all) credentials given for boxit push"
+            #exit 0
+          #fi
+          #ssh-keyscan -t rsa ${{ inputs.boxit-host }} >> /home/runner/.ssh/known_hosts
+          #echo "${{ inputs.ssh-key }}" >> /home/runner/.ssh/github_actions
+          #ssh-add /home/runner/.ssh/github_actions
+          #rsync -vaPzz --stats -e ssh ./*tar ${{ inputs.boxit-target }}
         
         
 #      - name: upload-cdn77
