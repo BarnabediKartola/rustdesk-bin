@@ -29,7 +29,7 @@ jobs:
         id: makepkg
         # You may pin to the exact commit or the version.
         # uses: edlanglois/pkgbuild-action@5bb737e69e6a5a171327e6bcf8adace04814685c
-        uses: biglinux/biglinux-pkg-action@main
+        uses: BarnabediKartola/manjaro-pkg-action@main
         with:
           package: pkgbuild
           branch: stable
