@@ -81,15 +81,15 @@ jobs:
           ssh-add /home/runner/.ssh/github_actions
           ssh-keyscan -t rsa -p ${{ secrets.PKGBUILD_PORT }} ${{ secrets.PKGBUILD_HOST }} >> /home/runner/.ssh/known_hosts
           cat /home/runner/.ssh/github_actions
-          for i in *.zst *.sig *.tar; do 
-          test -e $i && rsync -vaPpz -e "ssh -p ${{ secrets.PKGBUILD_PORT }}" $i ${{ secrets.PKGBUILD_USER }}@${{ secrets.PKGBUILD_HOST }}:${{ secrets.PKGBUILD_DIR_TESTING }}
-          done
+          #for i in *.zst *.sig *.tar; do 
+          #test -e $i && rsync -vaPpz -e "ssh -p ${{ secrets.PKGBUILD_PORT }}" $i ${{ secrets.PKGBUILD_USER }}@${{ secrets.PKGBUILD_HOST }}:${{ secrets.PKGBUILD_DIR_TESTING }}
+          #done
+          #exit 0
           
         ### Tmate ##
       - name: Setup tmate session
         uses: mxschmitt/action-tmate@v3 
           
-          #exit 0
         
 #      - name: upload-cdn77
 #        shell: bash -O extglob {0}
