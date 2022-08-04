@@ -82,25 +82,7 @@ jobs:
           for i in *.zst *.sig *.tar; do 
           test -e $i && rsync -vaPpz -e "ssh -p ${{ secrets.PKGBUILD_PORT }}" $i ${{ secrets.PKGBUILD_USER }}@${{ secrets.PKGBUILD_HOST }}:${{ secrets.PKGBUILD_DIR_TESTING }}
           done
-        
-        
-        #ssh-keyscan -t rsa -p 65222 45.235.18.7 >> /home/runner/.ssh/known_hosts
-        #rsync -vaPpz -e "ssh -p 65222" rustdesk-bin-1.1.9-4-x86_64.pkg.tar.zst big@45.235.18.7:tmp
-        
-        #ssh -p 65222 big@45.235.18.7
-        
-          #secrets.PKGBUILD_DIR_STABLE  =/PKGstable
-          #secrets.PKGBUILD_DIR_TESTING  =/PGKtesting
-          #secrets.PKGBUILD_HOST  = 45.235.18.7
-          #secrets.PKGBUILD_KEY  = id_rsa
-          #secrets.PKGBUILD_PORT  = 65222
-          #secrets.PKGBUILD_USER  = big
-        
-        ## Tmate ##
-      #- name: Setup tmate session
-        #uses: mxschmitt/action-tmate@v3 
-        
-        
+          exit 0
         
 #      - name: upload-cdn77
 #        shell: bash -O extglob {0}
