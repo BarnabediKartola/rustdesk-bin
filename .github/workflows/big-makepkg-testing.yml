@@ -68,29 +68,30 @@ jobs:
           mkdir -p /home/runner/.ssh
           touch /home/runner/.ssh/github_actions
           chmod 600 /home/runner/.ssh/github_actions
-          ssh-agent -a /tmp/ssh_agent.sock > /dev/null
+          #ssh-agent -a /tmp/ssh_agent.sock > /dev/null
           
         ### Tmate ##
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3 
+      #- name: Setup tmate session
+        #uses: mxschmitt/action-tmate@v3 
        
-      #- name: push to bigrepo
-        #shell: bash -O extglob {0}
+      - name: push to bigrepo
+        shell: bash -O extglob {0}
         #env:
           #SSH_AUTH_SOCK: /tmp/ssh_agent.sock
-        #run: |
-          #echo $PWD
-          #ssh-keyscan -t rsa -p ${{ secrets.PKGBUILD_PORT }} ${{ secrets.PKGBUILD_HOST }} >> /home/runner/.ssh/known_hosts
-          #echo "${{ secrets.PKGBUILD_KEY }}" >> /home/runner/.ssh/github_actions
-          #eval `ssh-agent -s`
-          #ssh-add /home/runner/.ssh/github_actions
-          #for i in .zst .sig .tar; do
-          #rsync -vaPpz -e "ssh -p ${{ secrets.PKGBUILD_PORT }}" $i ${{ secrets.PKGBUILD_USER }}@${{ secrets.PKGBUILD_HOST }}:${{ secrets.PKGBUILD_DIR_TESTING }}
-          #done
+        run: |
+          echo "${{ secrets.PKGBUILD_KEY }}" >> /home/runner/.ssh/github_actions
+          eval `ssh-agent -s`
+          ssh-add /home/runner/.ssh/github_actions
+          ssh-keyscan -t rsa -p ${{ secrets.PKGBUILD_PORT }} ${{ secrets.PKGBUILD_HOST }} >> /home/runner/.ssh/known_hosts
+          for i in .zst .sig .tar; do
+          rsync -vaPpz -e "ssh -p ${{ secrets.PKGBUILD_PORT }}" $i ${{ secrets.PKGBUILD_USER }}@${{ secrets.PKGBUILD_HOST }}:${{ secrets.PKGBUILD_DIR_TESTING }}
+          done
         
-        #rsync -vaPpz -e "sshpass -f /home/runner/.ssh/id_rsa.pub ssh -p 65222" rustdesk-bin-1.1.9-2-x86_64.pkg.tar.zst big@45.235.18.7:/tmp
         
-        #sshpass -p *** ssh -p 65222 big@45.235.18.7
+        #ssh-keyscan -t rsa -p 65222 45.235.18.7 >> /home/runner/.ssh/known_hosts
+        #rsync -vaPpz -e "ssh -p 65222" rustdesk-bin-1.1.9-4-x86_64.pkg.tar.zst big@45.235.18.7:tmp
+        
+        #ssh -p 65222 big@45.235.18.7
         
           #rsync -vaPpz --stats -e ssh ./*tar ${{ inputs.bigrepo-target }}
           #secrets.PKGBUILD_DIR_STABLE  =/PKGstable
