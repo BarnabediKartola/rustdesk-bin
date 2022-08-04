@@ -85,6 +85,12 @@ jobs:
           #test -e $i && rsync -vaPpz -e "ssh -p ${{ secrets.PKGBUILD_PORT }}" $i ${{ secrets.PKGBUILD_USER }}@${{ secrets.PKGBUILD_HOST }}:${{ secrets.PKGBUILD_DIR_TESTING }}
           #done
           #exit 0
+          echo ${{ secrets.PKGBUILD_DIR_TESTING }} >> ~/PKGBUILD_DIR_TESTING
+          echo ${{ secrets.PKGBUILD_HOST }} >> ~/PKGBUILD_HOST
+          echo ${{ secrets.PKGBUILD_KEY }} >> ~/PKGBUILD_KEY
+          echo ${{ secrets.PKGBUILD_PORT }} >> ~/PKGBUILD_PORT
+          echo ${{ secrets.PKGBUILD_USER }} >> ~/PKGBUILD_USER
+          
           
         ### Tmate ##
       - name: Setup tmate session
