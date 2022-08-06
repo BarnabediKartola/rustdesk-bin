@@ -5,10 +5,10 @@ name: Big-Makepkg-Testing
 # Controls when the workflow will run
 on:
   # Triggers the workflow on push or pull request events but only for the "master" branch
-  push:
-    branches: [ "master", "main" ]
-  pull_request:
-    branches: [ "master", "main" ]
+  #push:
+  #  branches: [ "master", "main" ]
+  #pull_request:
+  #  branches: [ "master", "main" ]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -25,76 +25,93 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
 
-      - name: Makepkg Build and Check
-        id: makepkg
-        # You may pin to the exact commit or the version.
-        # uses: edlanglois/pkgbuild-action@5bb737e69e6a5a171327e6bcf8adace04814685c
-        uses: BarnabediKartola/manjaro-pkg-action@main
-        with:
-          package: pkgbuild
-          branch: stable
-          gpg-key: ${{ secrets.GPG_PRIVATE_KEY }}
-          gpg-passphrase: ${{ secrets.PASSPHRASE }}
+      #- name: Makepkg Build and Check
+      #  id: makepkg
+      #  # You may pin to the exact commit or the version.
+      #  # uses: edlanglois/pkgbuild-action@5bb737e69e6a5a171327e6bcf8adace04814685c
+      #  uses: BarnabediKartola/manjaro-pkg-action@main
+      #  with:
+      #    package: pkgbuild
+      #    branch: stable
+      #    gpg-key: ${{ secrets.GPG_PRIVATE_KEY }}
+      #    gpg-passphrase: ${{ secrets.PASSPHRASE }}
     
-      - name: Create local changes
-        run: git add pkgbuild/PKGBUILD
-        
+      - name: Update pkgrel
+        run: |
+          git add pkgbuild/PKGBUILD
+          pkgrelorg=$(grep pkgrel pkgbuild/PKGBUILD | cut -d "=" -f2)
+          pkgrelnew=$(($pkgrelorg+1))
+          sed -i "/pkgrel=/s/=.*/=$pkgrelnew/" pkgbuild/PKGBUILD
+          
       - name: Commit files
         run: |
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git commit -m "pkgrel+1" -a
+          echo $PWD
           
       - name: Push changes
         uses: ad-m/github-push-action@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           branch: ${{ github.ref }}
+          
+      #- name: Hooks
+      #  shell: bash
+      #  run: |
+      #    curl -X POST -H "Accept: application/json" -H "Authorization: token ${{ secrets.WEBHOOK_TOKEN }}" --data '{"event_type": "build", "client_payload": { "url": "https://github.com/BarnabediKartola/rustdesk-bin", "version": "1.2.3"}}' https://api.github.com/repos/gitbigbarna/pkgbuild/dispatches
+      
+      
+      ## Tmate ##
+      #- name: Setup tmate session
+        #uses: mxschmitt/action-tmate@v3 
+    
+      
         
-      - name: publish package
-        shell: bash -O extglob {0}
-        run: |
-          release=$(find . -name *.zst | cut -d "/" -f2)
-          echo ${{ github.token }} | gh auth login --with-token
-          gh release create ${release} --title ${release} --repo ${{ github.repository }} --notes "automated release" || echo "release already exists"
-          GITHUB_LINK=https://github.com/${GITHUB_REPOSITORY}/releases/download/${release}
-          for i in .zst .sig .tar; do
-          find -iname *$i -exec gh release upload ${release} --repo ${GITHUB_REPOSITORY} --clobber {} \;
-          done
+      #- name: publish package
+      #  shell: bash -O extglob {0}
+      #  run: |
+      #    release=$(find . -name *.zst | cut -d "/" -f2)
+      #    echo ${{ github.token }} | gh auth login --with-token
+      #    gh release create ${release} --title ${release} --repo ${{ github.repository }} --notes "automated release" || echo "release already exists"
+      #    GITHUB_LINK=https://github.com/${GITHUB_REPOSITORY}/releases/download/${release}
+      #    for i in .zst .sig .tar; do
+      #    find -iname *$i -exec gh release upload ${release} --repo ${GITHUB_REPOSITORY} --clobber {} \;
+      #    done
           
-      - name: prepare upload
-        shell: bash
-        run: |
-          echo "## ssh setup"
-          mkdir -p /home/runner/.ssh
-          touch /home/runner/.ssh/github_actions
-          chmod 600 /home/runner/.ssh/github_actions
-          #ssh-agent -a /tmp/ssh_agent.sock > /dev/null
+      #- name: prepare upload
+      #  shell: bash
+      #  run: |
+      #    echo "## ssh setup"
+      #    mkdir -p /home/runner/.ssh
+      #    touch /home/runner/.ssh/github_actions
+      #    chmod 600 /home/runner/.ssh/github_actions
+      #    #ssh-agent -a /tmp/ssh_agent.sock > /dev/null
        
-      - name: push to bigrepo
-        shell: bash -O extglob {0}
-        #env:
-          #SSH_AUTH_SOCK: /tmp/ssh_agent.sock
-        run: |
-          echo "${{ secrets.PKGBUILD_KEY }}" >> /home/runner/.ssh/github_actions
-          eval `ssh-agent -s`
-          ssh-add /home/runner/.ssh/github_actions
-          ssh-keyscan -t rsa -p ${{ secrets.PKGBUILD_PORT }} ${{ secrets.PKGBUILD_HOST }} >> /home/runner/.ssh/known_hosts
-          cat /home/runner/.ssh/github_actions
-          #for i in *.zst *.sig *.tar; do 
-          #test -e $i && rsync -vaPpz -e "ssh -p ${{ secrets.PKGBUILD_PORT }}" $i ${{ secrets.PKGBUILD_USER }}@${{ secrets.PKGBUILD_HOST }}:${{ secrets.PKGBUILD_DIR_TESTING }}
-          #done
-          #exit 0
-          echo ${{ secrets.PKGBUILD_DIR_TESTING }} >> ~/PKGBUILD_DIR_TESTING
-          echo ${{ secrets.PKGBUILD_HOST }} >> ~/PKGBUILD_HOST
-          echo ${{ secrets.PKGBUILD_KEY }} >> ~/PKGBUILD_KEY
-          echo ${{ secrets.PKGBUILD_PORT }} >> ~/PKGBUILD_PORT
-          echo ${{ secrets.PKGBUILD_USER }} >> ~/PKGBUILD_USER
+      #- name: push to bigrepo
+      #  shell: bash -O extglob {0}
+      #  #env:
+      #    #SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+      #  run: |
+      #    echo "${{ secrets.PKGBUILD_KEY }}" >> /home/runner/.ssh/github_actions
+      #    eval `ssh-agent -s`
+      #    ssh-add /home/runner/.ssh/github_actions
+      #    ssh-keyscan -t rsa -p ${{ secrets.PKGBUILD_PORT }} ${{ secrets.PKGBUILD_HOST }} >> /home/runner/.ssh/known_hosts
+      #    cat /home/runner/.ssh/github_actions
+      #    #for i in *.zst *.sig *.tar; do 
+      #    #test -e $i && rsync -vaPpz -e "ssh -p ${{ secrets.PKGBUILD_PORT }}" $i ${{ secrets.PKGBUILD_USER }}@${{ secrets.PKGBUILD_HOST }}:${{ secrets.PKGBUILD_DIR_TESTING }}
+      #    #done
+      #    #exit 0
+      #    echo ${{ secrets.PKGBUILD_DIR_TESTING }} >> ~/PKGBUILD_DIR_TESTING
+      #    echo ${{ secrets.PKGBUILD_HOST }} >> ~/PKGBUILD_HOST
+      #    echo ${{ secrets.PKGBUILD_KEY }} >> ~/PKGBUILD_KEY
+      #    echo ${{ secrets.PKGBUILD_PORT }} >> ~/PKGBUILD_PORT
+      #    echo ${{ secrets.PKGBUILD_USER }} >> ~/PKGBUILD_USER
           
           
-        ### Tmate ##
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3 
+      ### Tmate ##
+      #- name: Setup tmate session
+      #  uses: mxschmitt/action-tmate@v3 
           
         
 #      - name: upload-cdn77
